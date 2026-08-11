@@ -23,6 +23,13 @@ public class JwtService {
     @Value("${jwt.expiration-ms:86400000}")
     private long jwtExpirationMs;
 
+    @Value("${jwt.access-minutes:0}")
+    private long jwtAccessMinutes;
+
+    private long getExpirationTimeMs() {
+        return jwtAccessMinutes > 0 ? jwtAccessMinutes * 60 * 1000 : jwtExpirationMs;
+    }
+
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -41,7 +48,7 @@ public class JwtService {
                 .claims(extraClaims)
                 .subject(userDetails.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
+                .expiration(new Date(System.currentTimeMillis() + getExpirationTimeMs()))
                 .signWith(getSignInKey())
                 .compact();
     }
